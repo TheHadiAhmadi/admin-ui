@@ -45,7 +45,6 @@ const lang = {
         button_submit: 'ثبت',
         button_cancel: 'انصراف',
 
-
         age: 'سن',
         created_at: 'تاریج ایجاد',
     },
