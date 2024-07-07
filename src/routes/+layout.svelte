@@ -2,7 +2,7 @@
 	import { setContext } from 'svelte'
 	import '../app.css';
 
-	let lang="fa"
+	let lang="en"
 
 	setContext('lang', lang)
 
