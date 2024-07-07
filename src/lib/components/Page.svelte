@@ -3,18 +3,21 @@
 	import type { Snippet } from 'svelte';
 
     interface PageProps {
-        title: string;
-        actions?: any[]; // Adjust the type according to your needs
+        config: {
+            title: string;
+            actions?: any[]; // Adjust the type according to your needs
+        },
         children?: Snippet
+            
     }
 
-    const { title, actions, children } = $props() as PageProps
+    const { config, children } = $props() as PageProps
 </script>
 
 <Page>
-    <PageHeader title={title}>
-        {#each actions ?? [] as action}
-            <Button color={action.color}>{action.label}</Button>
+    <PageHeader title={config.title}>
+        {#each config.actions ?? [] as action}
+            <Button color={action.color} href={action.href}>{action.label}</Button>
         {/each}
     </PageHeader>
 
