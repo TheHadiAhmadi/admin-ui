@@ -1,4 +1,5 @@
 <script lang="ts">
+    
     import {table} from './config'
 
 </script>

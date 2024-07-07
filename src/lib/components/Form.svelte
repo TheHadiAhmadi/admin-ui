@@ -1,7 +1,12 @@
 <script lang="ts">
     import {Button, Card, CardBody, CardActions} from 'plantir-uikit'
     import Field from './Field.svelte'
-    let {fields, value = $bindable({}) } = $props() as any
+    import {getContext} from 'svelte'
+
+    let {fields, lang, value = $bindable({}) } = $props() as any
+
+    const langCtx = getContext('lang')
+
 
     function onSubmit(e) {
         e.preventDefault()
@@ -11,18 +16,17 @@
 
 </script>
 
-
 <form onsubmit={onSubmit}>
     <Card>
         <CardBody>
-            {#each Object.keys(fields) as key}
-                <Field field={fields[key]} bind:value={value[key]} />
+            {#each fields as field}
+                <Field field={field} bind:value={value[field.key]} lang={lang[langCtx]} />
             {/each}
 
             <div class="h-4"></div>
             <CardActions>
-                <Button>Cancel</Button>
-                <Button type="submit" color="primary">Submit</Button>
+                <Button>{lang[langCtx].button_cancel ?? 'Cancel'}</Button>
+                <Button type="submit" color="primary">{lang[langCtx].button_submit ?? 'Submit'}</Button>
             </CardActions>
         </CardBody>
     </Card>

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {userForm} from '$lib/config'
+    import {form} from '../config'
     import Page from '$lib/components/Page.svelte'
 	import Form from '$lib/components/Form.svelte';
 
@@ -18,6 +18,6 @@
 </script>
 
 <Page config={pageConfig}>
-    <Form fields={userForm.fields} />
+    <Form fields={form.fields} lang={form.lang} />
 </Page>
 
