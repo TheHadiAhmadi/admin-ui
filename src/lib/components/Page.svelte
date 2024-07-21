@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {Page, PageHeader, Button} from 'plantir-uikit'
+    import {Page, PageHeader, Button, Icon} from 'plantir-uikit'
 	import type { Snippet } from 'svelte';
 
     interface PageProps {
@@ -19,7 +19,12 @@
     {#if config.title || config.actions}
         <PageHeader title={config.title}>
             {#each config.actions ?? [] as action}
-                <Button color={action.color} href={action.href}>{action.label}</Button>
+                <Button color={action.color} href={action.href}>
+                    {#if action.icon}
+                        <Icon size="lg" name={action.icon} />
+                    {/if}
+                    {action.label}
+                </Button>
             {/each}
         </PageHeader>
     {/if}

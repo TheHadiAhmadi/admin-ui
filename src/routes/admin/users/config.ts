@@ -87,6 +87,7 @@ export const form = {
 }
 
 export const table = {
+    name: 'users',
     lang,
     fields: [
         {key: 'name'},

@@ -14,11 +14,9 @@
             {title: 'Users'},
         ],
         actions: [
-            {label: 'Add', color: 'primary', href: "/users/add"}
+            {label: 'Add new user', icon: 'PlusMinor', color: 'primary', href: "/admin/users/add"}
         ]
     }
-
-    const langCtx = getContext('lang')
 
     const items = [
         {
@@ -50,5 +48,5 @@
 </script>
 
 <Page config={pageConfig}>
-    <DataTable fields={table.fields} lang={table.lang} {items} />
+    <DataTable name={table.name} fields={table.fields} lang={table.lang} {items} />
 </Page>
