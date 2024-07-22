@@ -90,29 +90,43 @@ export const table = {
     name: 'users',
     lang,
     fields: [
-        {key: 'name'},
+        {key: 'name', sortable: true},
         {
             key: 'username',
+            sortable: true,
+            value(item: any) {
+                return '@' + item.username
+            },
             props(item: any) {
                 return {
-                    value: '@' + item.username
+                    value: this.value(item)
                 }
             }
         },
         { 
             key: 'age', 
             type: 'number',
+            sortable: true,
             min: 0,
             max: 100,
+            value(item) {
+                const birthYear = new Date(item.date_of_birth).getFullYear()
+                return new Date().getFullYear() - birthYear
+                // value date 
+                // filter.min
+                // filter.max
+
+            },
             props(item: any) {
                 return {
-                    value: 30
+                    value: this.value(item)
                 }
             }
         },
         {
             key: 'status',
             type: 'select',
+            sortable: true,
             items: ['active', 'disabled'],
             component: Badge,
             props(item: any, lang: any) {
@@ -126,6 +140,7 @@ export const table = {
         {
             key: 'created_at',
             type: 'date',
+            sortable: true,
             // sort: true | false
         }
     ],

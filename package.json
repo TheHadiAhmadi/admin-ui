@@ -29,6 +29,8 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@faker-js/faker": "^8.4.1",
+		"@fakerjs/faker": "^3.0.0",
 		"daisyui": "^4.12.2",
 		"plantir-uikit": "^0.0.24",
 		"sass": "^1.77.6"

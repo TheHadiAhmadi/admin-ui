@@ -10,7 +10,7 @@
         {name}
     </th>
 {:else}
-<td>
-    {@render children()}
-</td>
+    <td>
+        {@render children()}
+    </td>
 {/if}

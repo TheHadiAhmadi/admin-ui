@@ -22,7 +22,7 @@
 		Loading
 	} from 'plantir-uikit';
 
-	let { name, items, fields, lang, headerActions } = $props();
+	let { sortColumn, sortOrder, page = 1, perPage = 10, totalItems, name, items, fields, lang, loadTableData, headerActions } = $props();
 
 	let loading = $state(true);
 
@@ -62,6 +62,7 @@
 		} else {
 			filters[field.key].value = '';
 		}
+		onFilterChanged()
 	}
 
 	function onMoreButtonClicked() {
@@ -69,21 +70,46 @@
 		//
 	}
 
-	function filterHasValue(filters, field) {
-		if (!filters[field.key]) return;
-		if (field.type == 'number') {
-			console.log(filters[field.key].value[0] > field.min, filters[field.key].value[1] < field.max);
-			return filters[field.key].value[0] > field.min || filters[field.key].value[1] < field.max;
+	function filterHasValue(filter, field) {
+		if (!filter) return;
+		if (filter.type == 'number') {
+			return filter.value[0] > field.min || filter.value[1] < field.max;
 		} else if (field.type === 'select') {
-			return filters[field.key].value?.length > 0;
+			return filter.value?.length > 0;
 		} else if (field.type === 'date') {
-			return filters[field.key].value?.length > 0;
+			return filter.value?.length > 0;
 		} else {
-			return filters[field.key].value;
+			return filter.value;
 		}
 	}
 
-	onMount(() => {
+	async function loadData() {
+		if(loadTableData) {
+			var result = await loadTableData({page, perPage, sort: {order: sortOrder, column: sortColumn }, filters, fields})
+			items = result.items
+			totalItems = result.totalItems
+		}
+	}
+
+	function onChangeSort(key) {
+		if (sortColumn !== key) {
+			sortColumn = key
+		} else {
+			sortOrder = sortOrder === 'ASC' ? 'DESC' : 'ASC'
+		}
+		loadData()
+	}
+
+	function onPageChange(event) {
+		// console.log(event)
+		page = event.detail
+
+		loadData()
+	}
+
+	onMount(async () => {
+		allColumns = fields.map((x) => x.key);
+
 		if (!visibleColumns.length) {
 			// get from localstorage
 
@@ -91,21 +117,28 @@
 			if (name && localStorageItems) {
 				visibleColumns = JSON.parse(localStorageItems);
 			} else {
-				visibleColumns = fields.map((x) => x.key);
+				visibleColumns = allColumns;
 			}
 		}
-		allColumns = fields.map((x) => x.key);
 
 		for (let field of fields) {
-			filters[field.key] = {};
+			filters[field.key] = {
+				type: field.type ?? 'text'
+			};
 			if (field.type === 'number') {
 				filters[field.key].value = [field.min, field.max];
 			}
 		}
+
+		await loadData()
+	
 		loading = false;
 	});
 
-	$inspect(filters, visibleColumns);
+	function onFilterChanged() {
+		page = 1		
+		loadData()
+	}
 </script>
 
 <Card>
@@ -116,19 +149,19 @@
 					<div
 						slot="toggler"
 						class="flex cursor-pointer items-center gap-2 rounded-full hover:text-base-content border border-base-300 bg-base-200 px-4 py-1 hover:bg-base-300"
-						class:bg-primary={filterHasValue(filters, field)}
-						class:text-primary-content={filterHasValue(filters, field)}
-						class:border-primary={filterHasValue(filters, field)}
+						class:bg-primary={filterHasValue(filters[field.key], field)}
+						class:text-primary-content={filterHasValue(filters[field.key], field)}
+						class:border-primary={filterHasValue(filters[field.key], field)}
 					>   
 						{lang[langCtx][field.key]}
-						{#if filterHasValue(filters, field)}
+						{#if filterHasValue(filters[field.key], field)}
 							<Icon onclick={(e) => onFilterRemoveClick(e, field)} name="CancelMajor" />
 						{/if}
 					</div>
 					<div class="w-full">
 						{#if filters[field.key]}
 							{#if field.type == 'select'}
-								<CheckboxGroup bind:value={filters[field.key].value} inline column>
+								<CheckboxGroup onchange={onFilterChanged} bind:value={filters[field.key].value} inline column>
 									{#each field.items as item}
 										<Checkbox
 											checked={filters[field.key].value.includes(item)}
@@ -139,6 +172,7 @@
 								</CheckboxGroup>
 							{:else if field.type == 'number'}
 								<Range
+									onchange={onFilterChanged}
 									bind:value={filters[field.key].value[0]}
 									label="From"
 									min={field.min ?? 0}
@@ -150,6 +184,7 @@
 									</div>
 								</Range>
 								<Range
+									onchange={onFilterChanged}
 									bind:value={filters[field.key].value[1]}
 									label="To"
 									min={field.min ?? 0}
@@ -162,8 +197,8 @@
 								</Range>
 							{:else if field.type == 'date'}
 								<DatePicker range bind:value={filters[field.key].value} />
-							{:else if !field.type}
-								<TextField class="w-full" bind:value={filters[field.key].value} label="Content" />
+							{:else if field.type ?? 'text' == 'text'}
+								<TextField onchange={onFilterChanged} class="w-full" bind:value={filters[field.key].value} label="Content" />
 							{/if}
 						{/if}
 					</div>
@@ -210,7 +245,21 @@
 				<tr>
 					{#each visibleColumns as columnKey}
 						{@const field = fields.find((x) => x.key === columnKey)}
-						<th>{lang[langCtx][field.key]}</th>
+						<th>
+							<button type="button" onclick={() => onChangeSort(field.key)} class="flex gap-2 items-center">
+								<span>{lang[langCtx][field.key]}</span>
+								{#if field.sortable && sortColumn == field.key}
+									{#if sortOrder === 'ASC'}
+										<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 16 16"><g fill="currentColor"><path fill-rule="evenodd" d="M10.082 5.629L9.664 7H8.598l1.789-5.332h1.234L13.402 7h-1.12l-.419-1.371zm1.57-.785L11 2.687h-.047l-.652 2.157z"/><path d="M12.96 14H9.028v-.691l2.579-3.72v-.054H9.098v-.867h3.785v.691l-2.567 3.72v.054h2.645zM4.5 2.5a.5.5 0 0 0-1 0v9.793l-1.146-1.147a.5.5 0 0 0-.708.708l2 1.999l.007.007a.497.497 0 0 0 .7-.006l2-2a.5.5 0 0 0-.707-.708L4.5 12.293z"/></g></svg>
+									{:else}
+										<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 16 16"><g fill="currentColor"><path fill-rule="evenodd" d="M10.082 5.629L9.664 7H8.598l1.789-5.332h1.234L13.402 7h-1.12l-.419-1.371zm1.57-.785L11 2.687h-.047l-.652 2.157z"/><path d="M12.96 14H9.028v-.691l2.579-3.72v-.054H9.098v-.867h3.785v.691l-2.567 3.72v.054h2.645zm-8.46-.5a.5.5 0 0 1-1 0V3.707L2.354 4.854a.5.5 0 1 1-.708-.708l2-1.999l.007-.007a.5.5 0 0 1 .7.006l2 2a.5.5 0 1 1-.707.708L4.5 3.707z"/></g></svg>
+									{/if}
+								{:else}
+									<div class="w-4 h-4"></div>
+								{/if}
+							</button>
+							
+						</th>
 					{/each}
 				</tr>
 			</thead>
@@ -240,15 +289,15 @@
 	{/if}
 
 	<div class="flex items-center justify-between p-4">
-		<div>Showing 2 of 100</div>
+		<div>Showing {(perPage * (page - 1)) + 1}-{perPage * page} of {totalItems}</div>
 		<div>
-			<Pagination size="sm" page={3} lastPage={10} />
+			<Pagination on:change={onPageChange} size="sm" {page} lastPage={Math.ceil(totalItems / perPage)} />
 		</div>
 	</div>
 </Card>
 
 <Dialog bind:open={columnsModalOpen}>
-	<DialogHeader title="Edit Columns"></DialogHeader>
+	<DialogHeader title="Edit Columns" />
 	<DialogBody>
 		<div>
 			<CheckboxGroup inline column bind:value={visibleColumnsDraft}>
